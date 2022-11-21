@@ -33,3 +33,23 @@ select * from parking_place where number = pp and floor = 4'
 language sql;
 
 select new_pp(pp.number) from parking_place pp ;
+
+create or replace function make_place_free() returns setof orders as
+$body$
+declare 
+oreder orders;
+begin
+	for oreder in
+	select * from orders o where o.overtime = true 
+loop 
+	update orders set overtime = false, date_to = null
+		where orders.id = oreder.id;
+	update parking_place set car_id = null 
+		where floor = oreder.pp_floor and "number" = oreder.pp_number;
+	
+end loop;
+end;
+$body$
+language plpgsql;
+
+select make_place_free();
